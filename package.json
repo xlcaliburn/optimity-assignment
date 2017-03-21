@@ -1,0 +1,10 @@
+{
+  "name": "optimity-assignment",
+  "version": "1.0.0",
+  "description": "Optimity Assignmentr",
+  "author": "Michael Wong",
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "express": "^4.15.2"
+  }
+}
