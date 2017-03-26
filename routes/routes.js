@@ -4,9 +4,7 @@ var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 var path = require('path');
 
-var SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-var TOKEN_DIR = './.credentials/';
-var TOKEN_PATH = TOKEN_DIR + 'calendar-nodejs-quickstart.json';
+var SCOPES = ['https://www.googleapis.com/auth/calendar'];
 var calendar = google.calendar('v3');
 var credentials;
 var auth = new googleAuth();
@@ -14,7 +12,7 @@ var oauth2Client;
 fs.readFile('client_secret.json', function processClientSecrets(err, content) {
     // Authorize a client with the loaded credentials
     credentials = JSON.parse(content);
-    oauth2Client = new auth.OAuth2(credentials.installed.client_id, credentials.installed.client_secret, credentials.installed.redirect_uris[0]);
+    oauth2Client = new auth.OAuth2(credentials.web.client_id, credentials.web.client_secret, credentials.web.redirect_uris[0]);
 });
 
 var token;
@@ -22,6 +20,12 @@ var token;
 var appRouter = function(app) {
     app.get("/", function(req, res) {
         res.sendFile(path.join(__dirname + '/../index.html'));
+        if(req.query.code)
+        {
+            oauth2Client.getToken(req.query.code, function(err, token) {
+                oauth2Client.credentials = token;
+            });
+        }
     });
 
     // Endpoint to get google authentication url
@@ -40,8 +44,8 @@ var appRouter = function(app) {
         oauth2Client.getToken(req.body.code, function(err, token) {
             if (err) {
                 console.log('Error while trying to retrieve access token', err);
-                res.sendStatus(400);
-                return;
+                return res.sendStatus(400);
+
             }
             oauth2Client.credentials = token;
             res.sendStatus(200);
@@ -49,12 +53,22 @@ var appRouter = function(app) {
     });
 
     app.get("/events", function(req, res, next) {
-        listEvents(function(err, cal) {
+        listEvents(function(err, response) {
             if (err) {
-                console.log('The API returned an error: ' + err);
-                return next(err);
+                console.log('Error while trying to retrieve access token', err);
+                return res.sendStatus(400);
             }
-            return res.send(cal.items);
+            return res.send(response.items);
+        });
+    });
+
+    app.post("/events", function(req, res) {
+        createEvent("asdf", '2017-03-29T12:00:00-04:00', '2017-03-29T14:00:00-04:00', function() {}, function(err, response) {
+            if (err) {
+                console.log(err);
+                return res.status(err.code).json(err.message);
+            }
+            return res.send(response);
         });
     });
 
@@ -69,34 +83,20 @@ var appRouter = function(app) {
         }, callback);
     }
 
-    function createEvent(auth, title, start, end, resolveConflict, callback) {
-        calendar.events.insert({
+    function createEvent(title, startTime, endTime, resolveConflict, callback) {
+        return calendar.events.insert({
             auth: oauth2Client,
             calendarId: 'primary',
-            description: title,
-            start: {
-                dateTime : start
-            },
-            end: {
-                dateTime : end
-            }
-        }, function(err, response) {
-            if (err) {
-                console.log('The API returned an error: ' + err);
-                return;
-            }
-            var events = response.items;
-            if (events.length === 0) {
-                console.log('No upcoming events found.');
-            } else {
-                console.log('Upcoming 10 events:');
-                for (var i = 0; i < events.length; i++) {
-                    var event = events[i];
-                    var start = event.start.dateTime || event.start.date;
-                    console.log('%s - %s', start, event.summary);
+            resource: {
+                summary: title,
+                start: {
+                  dateTime: startTime
+                },
+                end: {
+                  dateTime: endTime
                 }
-            }
-        });
+            },
+        }, callback);
     }
 };
 
