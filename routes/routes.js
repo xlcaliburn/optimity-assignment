@@ -3,7 +3,9 @@ var readline = require('readline');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 var path = require('path');
-var moment = require('moment');
+var Moment = require('moment');
+var MomentRange = require('moment-range');
+var moment = MomentRange.extendMoment(Moment);
 
 var SCOPES = ['https://www.googleapis.com/auth/calendar'];
 var calendar = google.calendar('v3');
@@ -64,7 +66,7 @@ var appRouter = function(app) {
     });
 
     app.post("/events", function(req, res) {
-        createEvent("asdf", '2017-03-29T12:00:00-04:00', '2017-03-29T14:00:00-04:00', function() {}, function(err, response) {
+        createEvent("asdf", '2017-03-29T12:00:00-04:00', '2017-03-29T14:00:00-04:00', true, function(err, response) {
             if (err) {
                 console.log(err);
                 return res.status(err.code).json(err.message);
@@ -85,33 +87,35 @@ var appRouter = function(app) {
         return calendar.events.list(parameters, callback);
     }
 
-    function createEvent(title, new_start, new_end, resolveConflict, callback) {
+    function createEvent(title, start, end, resolveConflict, callback) {
         // Dates should be moment js
-        var new_range = moment.range(new_start, new_end);
-        if (callback)
-        {
-            // Get events where min end time > new_start
-            listEvents(new_start, null, function(err, response) {
-                if (err) {
-                    console.log('Error while trying to retrieve access token', err);
-                    return res.sendStatus(400);
+        var new_range = moment().range(start, end);
+        if (resolveConflict) {
+            // Get events where min end time > start
+            listEvents(start, null, function(err, response) {
+                console.log(response.items);
+                if (response.items) {
+                    var existing_events = [];
+                    for (var i = 0; i < response.items.length; i++)
+                    {
+                        console.log(moment().range(response.items[i].start.dateTime, response.items[i].end.dateTime));
+                    }
                 }
-                return res.send(response.items);
             });
         }
-        return calendar.events.insert({
-            auth: oauth2Client,
-            calendarId: 'primary',
-            resource: {
-                summary: title,
-                start: {
-                  dateTime: startTime
-                },
-                end: {
-                  dateTime: endTime
-                }
-            },
-        }, callback);
+        // return calendar.events.insert({
+        //     auth: oauth2Client,
+        //     calendarId: 'primary',
+        //     resource: {
+        //         summary: title,
+        //         start: {
+        //           dateTime: startTime
+        //         },
+        //         end: {
+        //           dateTime: endTime
+        //         }
+        //     },
+        // }, callback);
     }
 
     function isConflict(start, end) {
