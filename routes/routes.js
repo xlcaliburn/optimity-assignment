@@ -3,6 +3,7 @@ var readline = require('readline');
 var google = require('googleapis');
 var googleAuth = require('google-auth-library');
 var path = require('path');
+var moment = require('moment');
 
 var SCOPES = ['https://www.googleapis.com/auth/calendar'];
 var calendar = google.calendar('v3');
@@ -53,7 +54,7 @@ var appRouter = function(app) {
     });
 
     app.get("/events", function(req, res, next) {
-        listEvents(function(err, response) {
+        listEvents(null, null, function(err, response) {
             if (err) {
                 console.log('Error while trying to retrieve access token', err);
                 return res.sendStatus(400);
@@ -72,18 +73,32 @@ var appRouter = function(app) {
         });
     });
 
-    function listEvents(callback) {
-        return calendar.events.list({
+    function listEvents(timeMin, timeMax, callback) {
+        var parameters = {
             auth: oauth2Client,
             calendarId: 'primary',
-            timeMin: (new Date()).toISOString(),
-            maxResults: 10,
             singleEvents: true,
             orderBy: 'startTime'
-        }, callback);
+        };
+        parameters.timeMin = timeMin ? timeMin : (new Date()).toISOString();
+        if (timeMax) { parameters.timeMax = timeMax; }
+        return calendar.events.list(parameters, callback);
     }
 
-    function createEvent(title, startTime, endTime, resolveConflict, callback) {
+    function createEvent(title, new_start, new_end, resolveConflict, callback) {
+        // Dates should be moment js
+        var new_range = moment.range(new_start, new_end);
+        if (callback)
+        {
+            // Get events where min end time > new_start
+            listEvents(new_start, null, function(err, response) {
+                if (err) {
+                    console.log('Error while trying to retrieve access token', err);
+                    return res.sendStatus(400);
+                }
+                return res.send(response.items);
+            });
+        }
         return calendar.events.insert({
             auth: oauth2Client,
             calendarId: 'primary',
@@ -97,6 +112,17 @@ var appRouter = function(app) {
                 }
             },
         }, callback);
+    }
+
+    function isConflict(start, end) {
+        // Moment.js should be used here for date
+        listEvents(moment(end).subtract(1, 'second'), moment(start), function (err, response) {
+            if (err) {
+                console.log('Error while trying to retrieve access token', err);
+                return res.sendStatus(400);
+            }
+            return response.items !== [];
+        });
     }
 };
 
