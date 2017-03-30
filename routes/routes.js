@@ -66,7 +66,7 @@ var appRouter = function(app) {
     });
 
     app.post("/events", function(req, res) {
-        createEvent("asdf", '2017-03-29T12:00:00-04:00', '2017-03-29T14:00:00-04:00', true, function(err, response) {
+        createEvent("asdf", '2017-04-05T12:00:00-04:00', '2017-04-05T14:00:00-04:00', true, function(err, response) {
             if (err) {
                 console.log(err);
                 return res.status(err.code).json(err.message);
@@ -75,34 +75,47 @@ var appRouter = function(app) {
         });
     });
 
+    // timeMin: lower bound for an event's end time
+    // timeMax: upper bound for an event's start time
     function listEvents(timeMin, timeMax, callback) {
         var parameters = {
             auth: oauth2Client,
             calendarId: 'primary',
             singleEvents: true,
-            orderBy: 'startTime'
+            orderBy: 'startTime',
+            timeMin: timeMin.toISOString() || (new Date()).toISOString()
         };
-        parameters.timeMin = timeMin ? timeMin : (new Date()).toISOString();
-        if (timeMax) { parameters.timeMax = timeMax; }
+        if (timeMax) { parameters.timeMax = timeMax.toISOString(); }
+        console.log(parameters);
         return calendar.events.list(parameters, callback);
     }
 
     function createEvent(title, start, end, resolveConflict, callback) {
-        // Dates should be moment js
         var new_range = moment().range(start, end);
         if (resolveConflict) {
             // Get events where min end time > start
-            listEvents(start, null, function(err, response) {
-                console.log(response.items);
+            listEvents(moment(start), moment(end).endOf('day'), function(err, response) {
+                if (err) {
+                    console.log(err);
+                    return res.status(err.code).json(err.message);
+                }
                 if (response.items) {
                     var existing_events = [];
+                    var temp_range;
                     for (var i = 0; i < response.items.length; i++)
                     {
-                        console.log(moment().range(response.items[i].start.dateTime, response.items[i].end.dateTime));
+                        temp_range = moment().range(response.items[i].start.dateTime, response.items[i].end.dateTime);
+                        existing_events.push(temp_range);
                     }
+                    console.log(existing_events);
                 }
             });
+
+            console.log("new range");
+            console.log(new_range);
+            console.log("end");
         }
+
         // return calendar.events.insert({
         //     auth: oauth2Client,
         //     calendarId: 'primary',
@@ -118,16 +131,22 @@ var appRouter = function(app) {
         // }, callback);
     }
 
-    function isConflict(start, end) {
-        // Moment.js should be used here for date
-        listEvents(moment(end).subtract(1, 'second'), moment(start), function (err, response) {
-            if (err) {
-                console.log('Error while trying to retrieve access token', err);
-                return res.sendStatus(400);
-            }
-            return response.items !== [];
-        });
+    // function isConflict(start, end) {
+    //     // Moment.js should be used here for date
+    //     listEvents(moment(end).subtract(1, 'second'), moment(start), function (err, response) {
+    //         if (err) {
+    //             console.log('Error while trying to retrieve access token', err);
+    //             return res.sendStatus(400);
+    //         }
+    //         return response.items !== [];
+    //     });
+    // }
+
+    function findNextAvailability()
+    {
+
     }
+
 };
 
 module.exports = appRouter;
