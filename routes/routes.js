@@ -56,7 +56,7 @@ var appRouter = function(app) {
     });
 
     app.get("/events", function(req, res, next) {
-        listEvents(null, null, function(err, response) {
+        listEvents(new Date(), null, function(err, response) {
             if (err) {
                 console.log('Error while trying to retrieve access token', err);
                 return res.sendStatus(400);
@@ -66,7 +66,7 @@ var appRouter = function(app) {
     });
 
     app.post("/events", function(req, res) {
-        createEvent("asdf", '2017-04-05T12:00:00-04:00', '2017-04-05T14:00:00-04:00', true, function(err, response) {
+        createEvent("BRAND NEW EVENT", '2017-04-05T12:00:00-04:00', '2017-04-05T14:00:00-04:00', true, function(err, response) {
             if (err) {
                 console.log(err);
                 return res.status(err.code).json(err.message);
@@ -86,7 +86,6 @@ var appRouter = function(app) {
             timeMin: timeMin.toISOString() || (new Date()).toISOString()
         };
         if (timeMax) { parameters.timeMax = timeMax.toISOString(); }
-        console.log(parameters);
         return calendar.events.list(parameters, callback);
     }
 
@@ -107,46 +106,59 @@ var appRouter = function(app) {
                         temp_range = moment().range(response.items[i].start.dateTime, response.items[i].end.dateTime);
                         existing_events.push(temp_range);
                     }
-                    console.log(existing_events);
+                    var next_available_range = findNextAvailability(new_range, existing_events);
+                    new_range.start = moment(next_available_range.start);
+                    new_range.end = moment(next_available_range.end);
                 }
             });
-
-            console.log("new range");
-            console.log(new_range);
-            console.log("end");
         }
 
-        // return calendar.events.insert({
-        //     auth: oauth2Client,
-        //     calendarId: 'primary',
-        //     resource: {
-        //         summary: title,
-        //         start: {
-        //           dateTime: startTime
-        //         },
-        //         end: {
-        //           dateTime: endTime
-        //         }
-        //     },
-        // }, callback);
+        return calendar.events.insert({
+            auth: oauth2Client,
+            calendarId: 'primary',
+            resource: {
+                summary: title,
+                start: {
+                  dateTime: moment(new_range.start).toISOString()
+                },
+                end: {
+                  dateTime: moment(new_range.end).toISOString()
+                }
+            },
+        }, callback);
     }
 
-    // function isConflict(start, end) {
-    //     // Moment.js should be used here for date
-    //     listEvents(moment(end).subtract(1, 'second'), moment(start), function (err, response) {
-    //         if (err) {
-    //             console.log('Error while trying to retrieve access token', err);
-    //             return res.sendStatus(400);
-    //         }
-    //         return response.items !== [];
-    //     });
-    // }
-
-    function findNextAvailability()
+    function findNextAvailability(initialSearchRange, existingEvents)
     {
-
+        // Find for the next searchValue availability in the searchRange minus the existingEvents
+        // Assuming the existing Events are in sorted order
+        var new_range = initialSearchRange;
+        var next;
+        for (var i = 0; i < existingEvents.length; i++)
+        {
+            if (next = isConflict(new_range, existingEvents))
+            {
+                new_range = moment.range(next, moment(next).add(initialSearchRange.valueOf(), 'ms'));
+            }
+            else
+            {
+                return new_range;
+            }
+        }
+        return new_range;
     }
 
+    function isConflict(range, existingEvents)
+    {
+        for (var j = 0; j < existingEvents.length; j++)
+        {
+            if (range.overlaps(existingEvents[j]))
+            {
+                return moment(existingEvents[j].end);
+            }
+        }
+        return null;
+    }
 };
 
 module.exports = appRouter;
