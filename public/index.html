@@ -2,82 +2,85 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <title>Google Calendar API</title>
-  <meta name="description" content="DESCRIPTION">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Google Calendar API</title>
+    <meta name="description" content="DESCRIPTION">
+    <link rel="stylesheet" href="style.css">
 
-  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
-  <!--[if lt IE 9]>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <!--[if lt IE 9]>
   <script src = "http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
   <![endif]-->
 </head>
+
 <body>
-  <div class="container">
-      <a href="https://accounts.google.com/o/oauth2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&response_type=code&client_id=298903977210-l27e691t8te7uha8p0u44uk17k66rfba.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8887">
+    <div class="container">
+        <a href="https://accounts.google.com/o/oauth2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&response_type=code&client_id=298903977210-l27e691t8te7uha8p0u44uk17k66rfba.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8887">
           Connect Google Account </a>
 
-    <div class="row">
-      <div class="col-md-6 col-md-offset-3 col-xs-12">
-        <h3>Create an Event</h3>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-6 col-md-offset-3 col-xs-12">
-
-        <!-- Event Name -->
-        <div class="form-group">
-          <label for="event-name">Event Name:</label>
-          <input type="text" class="form-control" id="event-name" />
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3 col-xs-12">
+                <h3>Create an Event</h3>
+            </div>
         </div>
 
-        <!-- Event Start -->
-        <div class="form-group">
-          <label for="event-name">Event Start:</label>
-          <input type="datetime-local" class="form-control" id="event-start" />
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3 col-xs-12">
+
+                <!-- Event Name -->
+                <div class="form-group">
+                    <label for="event-name">Event Name:</label>
+                    <input type="text" class="form-control" id="event-name" />
+                </div>
+
+                <!-- Event Start -->
+                <div class="form-group">
+                    <label for="event-name">Event Start:</label>
+                    <input type="datetime-local" class="form-control" id="event-start" />
+                </div>
+
+                <!-- Event End -->
+                <div class="form-group">
+                    <label for="event-name">Event End:</label>
+                    <input type="datetime-local" class="form-control" id="event-end" />
+                </div>
+
+                <button style="float: right; margin-left: 20px;" onclick="newEvent()">Create</button>
+                <button style="float: right" onclick="clearFields()">Clear</button>
+
+            </div>
         </div>
 
-        <!-- Event End -->
-        <div class="form-group">
-          <label for="event-name">Event End:</label>
-          <input type="datetime-local" class="form-control" id="event-end" />
+        <hr />
+
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3 col-xs-12">
+                <h3>Your Events</h3>
+            </div>
+            <button style="float: right" onclick="fetchEvents()">Get Events</button>
         </div>
 
-        <button style="float: right; margin-left: 20px;" onclick="newEvent()">Create</button>
-        <button style="float: right" onclick="clearFields()">Clear</button>
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3 col-xs-12">
+                <table width="100%" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <td width="33%">Event Name</td>
+                            <td width="33%">Start time</td>
+                            <td width="33%">End time</td>
+                        </tr>
+                    </thead>
+                    <tbody>
 
-      </div>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
     </div>
-
-    <hr />
-
-    <div class="row">
-      <div class="col-md-6 col-md-offset-3 col-xs-12">
-        <h3>Your Events</h3>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-6 col-md-offset-3 col-xs-12">
-        <table width="100%" class="table table-striped">
-          <thead>
-            <tr>
-              <td width="33%">Event Name</td>
-              <td width="33%">Start time</td>
-              <td width="33%">End time</td>
-            </tr>
-          </thead>
-          <tbody>
-
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-  <script src="https://code.jquery.com/jquery-2.2.1.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
-  <script src="script.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="script.js"></script>
 </body>
+
 </html>

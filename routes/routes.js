@@ -22,10 +22,11 @@ var token;
 
 var appRouter = function(app) {
     app.get("/", function(req, res) {
-        res.sendFile(path.join(__dirname + '/../index.html'));
+        res.sendFile(path.join(__dirname + '/../public'));
         if(req.query.code)
         {
             oauth2Client.getToken(req.query.code, function(err, token) {
+                console.log("token received");
                 oauth2Client.credentials = token;
             });
         }
@@ -48,8 +49,8 @@ var appRouter = function(app) {
             if (err) {
                 console.log('Error while trying to retrieve access token', err);
                 return res.sendStatus(400);
-
             }
+            // TODO: Get a GET call to userinfo to get info from the OAuth2 bearer token
             oauth2Client.credentials = token;
             res.sendStatus(200);
         });
@@ -83,16 +84,16 @@ var appRouter = function(app) {
             calendarId: 'primary',
             singleEvents: true,
             orderBy: 'startTime',
-            timeMin: timeMin.toISOString() || (new Date()).toISOString()
+            timeMin: timeMin ? timeMin.toISOString() : (new Date()).toISOString()
         };
         if (timeMax) { parameters.timeMax = timeMax.toISOString(); }
         return calendar.events.list(parameters, callback);
     }
 
     function createEvent(title, start, end, resolveConflict, callback) {
-        var new_range = moment().range(start, end);
         if (resolveConflict) {
             // Get events where min end time > start
+            var new_range = moment().range(start, end);
             listEvents(moment(start), moment(end).endOf('day'), function(err, response) {
                 if (err) {
                     console.log(err);
@@ -109,34 +110,49 @@ var appRouter = function(app) {
                     var next_available_range = findNextAvailability(new_range, existing_events);
                     new_range.start = moment(next_available_range.start);
                     new_range.end = moment(next_available_range.end);
-                }
+
+                    return calendar.events.insert({
+                        auth: oauth2Client,
+                        calendarId: 'primary',
+                        resource: {
+                            summary: title,
+                            start: {
+                              dateTime: moment(new_range.start).toISOString()
+                            },
+                            end: {
+                              dateTime: moment(new_range.end).toISOString()
+                            }
+                        },
+                    }, callback);                }
             });
         }
-
-        return calendar.events.insert({
-            auth: oauth2Client,
-            calendarId: 'primary',
-            resource: {
-                summary: title,
-                start: {
-                  dateTime: moment(new_range.start).toISOString()
+        else {
+            return calendar.events.insert({
+                auth: oauth2Client,
+                calendarId: 'primary',
+                resource: {
+                    summary: title,
+                    start: {
+                      dateTime: start
+                    },
+                    end: {
+                      dateTime: end
+                    }
                 },
-                end: {
-                  dateTime: moment(new_range.end).toISOString()
-                }
-            },
-        }, callback);
+            }, callback);
+        }
     }
 
+    // Find for the next searchValue availability in the searchRange minus the existingEvents
+    // Assuming the existing Events are in sorted order
     function findNextAvailability(initialSearchRange, existingEvents)
     {
-        // Find for the next searchValue availability in the searchRange minus the existingEvents
-        // Assuming the existing Events are in sorted order
         var new_range = initialSearchRange;
         var next;
         for (var i = 0; i < existingEvents.length; i++)
         {
-            if (next = isConflict(new_range, existingEvents))
+            next = nextRangeStart(new_range, existingEvents);
+            if (next)
             {
                 new_range = moment.range(next, moment(next).add(initialSearchRange.valueOf(), 'ms'));
             }
@@ -148,7 +164,9 @@ var appRouter = function(app) {
         return new_range;
     }
 
-    function isConflict(range, existingEvents)
+    // Find if the submitted range overlaps with any of the existingEvents, and if yes,
+    // return the end time of the event. Otherwise, return nothing
+    function nextRangeStart(range, existingEvents)
     {
         for (var j = 0; j < existingEvents.length; j++)
         {
