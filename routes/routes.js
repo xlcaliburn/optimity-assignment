@@ -26,7 +26,6 @@ var appRouter = function(app) {
         if(req.query.code)
         {
             oauth2Client.getToken(req.query.code, function(err, token) {
-                console.log("token received");
                 oauth2Client.credentials = token;
             });
         }
@@ -67,10 +66,16 @@ var appRouter = function(app) {
     });
 
     app.post("/events", function(req, res) {
-        createEvent("BRAND NEW EVENT", '2017-04-05T12:00:00-04:00', '2017-04-05T14:00:00-04:00', true, function(err, response) {
+        console.log(req.body);
+        if (!req.body) { return res.sendStatus(400); }
+        var title = req.body.title ? req.body.title : "BRAND NEW EVENT";
+        var start = req.body.start ? moment(req.body.start) : moment(); // test: '2017-04-05T12:00:00-04:00'
+        var end = req.body.end ? moment(req.body.end) : moment().add(1, 'hours'); // test: '2017-04-05T14:00:00-04:00'
+        var resolveConflict = (req.body.resolve_conflict == 'true');
+        createEvent(title, start, end, resolveConflict, function(err, response) {
             if (err) {
                 console.log(err);
-                return res.status(err.code).json(err.message);
+                return res.send(err);
             }
             return res.send(response);
         });
@@ -97,7 +102,7 @@ var appRouter = function(app) {
             listEvents(moment(start), moment(end).endOf('day'), function(err, response) {
                 if (err) {
                     console.log(err);
-                    return res.status(err.code).json(err.message);
+                    return err;
                 }
                 if (response.items) {
                     var existing_events = [];

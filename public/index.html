@@ -15,9 +15,13 @@
 
 <body>
     <div class="container">
-        <a href="https://accounts.google.com/o/oauth2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&response_type=code&client_id=298903977210-l27e691t8te7uha8p0u44uk17k66rfba.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8887">
-          Connect Google Account </a>
-
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <button onclick="location.href='https://accounts.google.com/o/oauth2/auth?access_type=offline&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar&response_type=code&client_id=298903977210-l27e691t8te7uha8p0u44uk17k66rfba.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8887';">
+                    Connect Google Account
+                </button>
+            </div>
+        </div>
         <div class="row">
             <div class="col-md-6 col-md-offset-3 col-xs-12">
                 <h3>Create an Event</h3>
@@ -35,19 +39,24 @@
 
                 <!-- Event Start -->
                 <div class="form-group">
-                    <label for="event-name">Event Start:</label>
+                    <label for="event-start">Event Start:</label>
                     <input type="datetime-local" class="form-control" id="event-start" />
                 </div>
 
                 <!-- Event End -->
                 <div class="form-group">
-                    <label for="event-name">Event End:</label>
+                    <label for="event-end">Event End:</label>
                     <input type="datetime-local" class="form-control" id="event-end" />
                 </div>
 
-                <button style="float: right; margin-left: 20px;" onclick="newEvent()">Create</button>
-                <button style="float: right" onclick="clearFields()">Clear</button>
+                <div class="form-group checkbox">
+                    <label for="resolve-conflict">
+                        <input type="checkbox" value="" id="resolve-conflict">
+                        Resolve Conflict
+                    </label>
+                </div>
 
+                <button style="float: right;" onclick="newEvent()">Create</button>
             </div>
         </div>
 
@@ -55,9 +64,9 @@
 
         <div class="row">
             <div class="col-md-6 col-md-offset-3 col-xs-12">
-                <h3>Your Events</h3>
+                <h3>Your Events (Not coded, check console)</h3>
+                <button style="float: right" onclick="fetchEvents()">Get Events</button>
             </div>
-            <button style="float: right" onclick="fetchEvents()">Get Events</button>
         </div>
 
         <div class="row">

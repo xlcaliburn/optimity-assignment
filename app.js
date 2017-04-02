@@ -2,10 +2,10 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var app = express();
 
-var routes = require("./routes/routes.js")(app);
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+var routes = require("./routes/routes.js")(app);
+
 app.use(express.static('public'));
 
 var server = app.listen(8887, function () {

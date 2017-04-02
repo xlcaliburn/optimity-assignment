@@ -1,23 +1,20 @@
 function newEvent() {
-    var data = {
-        event_name: $('#event-name').val(),
-        start_date: $('#event-start').val(),
-        end_date: $('#event-end').val()
-    };
-
+    var data = {};
+    data.title = $('#event-name').val();
+    data.start_date = $('#event-start').val();
+    data.end_date = $('#event-end').val();
+    data.resolve_conflict = $('#resolve-conflict')[0].checked;
     $.ajax({
             url: 'http://localhost:8887/events',
             method: 'post',
             data: data
         })
-        .done(fetchEvents.bind(null))
-        .error(handleError.bind(null, err));
-}
-
-function clearFields() {
-    $('#event-name').val('');
-    $('#event-start').val('');
-    $('#event-end').val('');
+        .done(function(res) {
+            console.log(res);
+        })
+        .error(function(err) {
+            console.log(err);
+        });
 }
 
 function displayEvents(data) {
